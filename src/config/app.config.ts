@@ -9,6 +9,8 @@ export const PATH_ROOT = 'kakitulooker';
 export const URL_WHITE_LIST = [
     'https://kakitu.org',
     'https://www.kakitu.org',
+    'https://explorer.kakitu.org',
+    'https://aware-upliftment-production.up.railway.app',
     'http://localhost:4200',
     'http://localhost:4202',
 ];
