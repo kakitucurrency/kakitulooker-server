@@ -1,4 +1,4 @@
 export type PriceDataDto = {
-    bananoPriceUsd: number;
+    kakituPriceUsd: number;
     bitcoinPriceUsd: number;
 };

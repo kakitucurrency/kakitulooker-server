@@ -103,7 +103,7 @@ export const staggerServerUpdates = async (cacheFns: Array<{ method: Function; i
 };
 
 server.listen(port, () => {
-    LOG_INFO(`Running yellow-spyglass server on port ${port}.`);
+    LOG_INFO(`Running kakitulooker-server on port ${port}.`);
     LOG_INFO(`Production mode enabled? : ${IS_PRODUCTION}`);
 
     const networkStats = {

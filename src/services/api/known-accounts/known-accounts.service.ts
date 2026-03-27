@@ -1,31 +1,9 @@
-import axios, { AxiosResponse } from 'axios';
 import { AppCache } from '@app/config';
 import { KnownAccountDto } from '@app/types';
-import { LOG_ERR } from '@app/services';
+import { LOG_INFO } from '@app/services';
 
-/** Calls Spyglass API to get known accounts. */
-const getKnownAccountsPromise = (): Promise<KnownAccountDto[]> =>
-    new Promise<KnownAccountDto[]>((resolve) => {
-        axios
-            .request({
-                method: 'POST',
-                url: 'https://api.spyglass.pw/banano/v1/known/accounts',
-                data: {
-                    includeOwner: true,
-                    includeType: true,
-                },
-            })
-            .then((response: AxiosResponse<KnownAccountDto[]>) => resolve(response.data))
-            .catch((err) => {
-                LOG_ERR('getKnownAccountsPromise', err);
-                resolve([]);
-            });
-    });
-
-/** Saves known accounts in the App Cache. */
+/** Kakitu has no external known-accounts registry yet — return empty list. */
 export const cacheKnownAccounts = async (): Promise<void> => {
-    const remoteAccounts = await getKnownAccountsPromise();
-    if (remoteAccounts.length > 0) {
-        AppCache.knownAccounts = remoteAccounts;
-    }
+    LOG_INFO('Known accounts: no external registry, using empty list');
+    AppCache.knownAccounts = [] as KnownAccountDto[];
 };

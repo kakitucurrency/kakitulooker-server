@@ -1,5 +1,5 @@
 import { LOG_ERR, LOG_INFO } from '@app/services';
-import { CMCPriceData, PriceDataDto } from '@app/types';
+import { PriceDataDto } from '@app/types';
 import { AppCache } from '@app/config';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 
@@ -9,25 +9,8 @@ const headers = {
     'X-CMC_PRO_API_KEY': process.env.CMC_API_KEY,
 };
 
-const getBananoPrice = (): Promise<CMCPriceData> =>
-    new Promise<CMCPriceData>((resolve, reject) => {
-        axios
-            .request({
-                method,
-                url,
-                headers,
-                params: {
-                    symbol: 'BAN',
-                },
-            })
-            .then((response: AxiosResponse<CMCPriceData>) => resolve(response.data))
-            .catch((err: AxiosError) => {
-                reject(LOG_ERR('getBananoPrice', err));
-            });
-    });
-
-const getBitcoinPrice = (): Promise<CMCPriceData> =>
-    new Promise<CMCPriceData>((resolve, reject) => {
+const getBitcoinPrice = (): Promise<any> =>
+    new Promise<any>((resolve, reject) => {
         axios
             .request({
                 method,
@@ -37,18 +20,18 @@ const getBitcoinPrice = (): Promise<CMCPriceData> =>
                     symbol: 'BTC',
                 },
             })
-            .then((response: AxiosResponse<CMCPriceData>) => resolve(response.data))
+            .then((response: AxiosResponse<any>) => resolve(response.data))
             .catch((err: AxiosError) => {
                 reject(LOG_ERR('getBitcoinPrice', err));
             });
     });
 
 const getPrice = (): Promise<PriceDataDto> => {
-    return Promise.all([getBananoPrice(), getBitcoinPrice()])
-        .then((results) => {
+    return getBitcoinPrice()
+        .then((btcData) => {
             const dto: PriceDataDto = {
-                bananoPriceUsd: results[0].data.BAN.quote.USD.price,
-                bitcoinPriceUsd: results[1].data.BTC.quote.USD.price,
+                kakituPriceUsd: 0, // KSHS not yet listed on CMC
+                bitcoinPriceUsd: btcData.data.BTC.quote.USD.price,
             };
             return Promise.resolve(dto);
         })
@@ -57,7 +40,7 @@ const getPrice = (): Promise<PriceDataDto> => {
         });
 };
 
-/** This is called to update the Price Data in the AppCache.  Reads price data from CoinMarketCap. */
+/** This is called to update the Price Data in the AppCache. */
 export const cachePriceData = async (): Promise<void> => {
     return new Promise((resolve) => {
         const start = LOG_INFO('Refreshing Price Data');
@@ -67,6 +50,8 @@ export const cachePriceData = async (): Promise<void> => {
                 resolve(LOG_INFO('Price Data Updated', start));
             })
             .catch((err) => {
+                // Fall back to stub data if CMC is unavailable
+                AppCache.priceData = { kakituPriceUsd: 0, bitcoinPriceUsd: 0 };
                 resolve(LOG_ERR('cachePriceData', err));
             });
     });

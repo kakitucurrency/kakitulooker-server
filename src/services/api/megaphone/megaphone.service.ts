@@ -4,7 +4,7 @@ import { megaphoneAccounts } from '../../../config/megaphone-accounts';
 
 const sendFunds = (wallet: string, source: string, destination: string, amount: string): Promise<any> =>
     new Promise((resolve) => {
-        const start = LOG_INFO(`Sending BAN to account ${destination}`);
+        const start = LOG_INFO(`Sending KSHS to account ${destination}`);
         sendRpc(wallet, source, destination, amount)
             .then(() => {
                 LOG_INFO('Sent funds successfully', start);

@@ -1,34 +1,14 @@
 import { AppCache } from '@app/config';
 import { LOG_ERR, LOG_INFO } from '@app/services';
 import { AccountBalanceDto } from '@app/types';
-import axios, { AxiosResponse } from 'axios';
 
 const MAX_RECORDS_PER_PAGE = 25;
 const DEFAULT_RECORDS_PER_PAGE = 25;
 
-/** Calls Spyglass API to get account rich list. */
-const getRichListPromise = (): Promise<AccountBalanceDto[]> =>
-    new Promise<AccountBalanceDto[]>((resolve) => {
-        axios
-            .request({
-                method: 'GET',
-                url: 'https://api.spyglass.pw/banano/v1/distribution/rich-list-snapshot',
-            })
-            .then((response: AxiosResponse<AccountBalanceDto[]>) => resolve(response.data))
-            .catch((err) => {
-                LOG_ERR('getRichListPromise', err);
-                resolve([]);
-            });
-    });
-
-/** Call this to repopulate the rich list in the AppCache. */
+/** Kakitu has no external rich-list snapshot yet — uses empty list. */
 export const cacheRichList = async (): Promise<void> => {
-    LOG_INFO('Updating Rich List Snapshot');
-    const richList = await getRichListPromise();
-    if (richList.length > 0) {
-        AppCache.richList = richList;
-        LOG_INFO('Rich List Snapshot Updated');
-    }
+    LOG_INFO('Rich list: no external registry, using empty list');
+    AppCache.richList = [] as AccountBalanceDto[];
 };
 
 /** Uses the AppCache to return a section of all known accounts. */
@@ -40,6 +20,6 @@ export const getRichList = async (req, res) => {
         const addresses = AppCache.richList.slice(offset, end);
         res.send(addresses);
     } else {
-        res.status(500).send({ error: 'Account List not loaded yet' });
+        res.send([]);
     }
 };

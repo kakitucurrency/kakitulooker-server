@@ -10,7 +10,7 @@ import {
 import { NetworkStatsDto } from '../types/dto/NetworkStatsDto';
 
 export type AppCache = {
-    /** Graph data for BAN distribution. */
+    /** Graph data for KSHS distribution. */
     accountDistributionStats: AccountDistributionStatsDto;
 
     /** This object matches the json collection for representative pings. */
@@ -19,7 +19,7 @@ export type AppCache = {
     /** Populated by a csv of hash -> timestamp pairs. */
     historicHash: Map<string, string>;
 
-    /** BAN accounts with an alias. */
+    /** KSHS accounts with an alias. */
     knownAccounts: KnownAccountDto[];
 
     networkStats: NetworkStatsDto;
@@ -37,18 +37,18 @@ export type AppCache = {
         map: Map<string, number>;
     };
 
-    /** Top BANANO holders, sorted by balance. */
+    /** Top KSHS holders, sorted by balance. */
     richList: AccountBalanceDto[];
 
     /** Representative Cache which updates every 5 minutes.
      *  Stores online weight, monitored, large, and micro representatives.
-     *  Used by Kalium. DEPRECATED
+     *  Legacy cache. DEPRECATED
      *  */
     representatives: RepresentativesResponseDto;
 
     /** Representative Cache which updates every 5 minutes.
      *  Stores online weight, monitored, large, and micro representatives.
-     *  Used by YellowSpyglass. */
+     *  Used by KakituLooker. */
     representativesV2: RepresentativesResponseDto;
 };
 

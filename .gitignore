@@ -33,4 +33,4 @@ rep-uptime-dev
 serviceAccountKey.ts
 known-accounts.ts
 balances.json
-megaphone-accounts.ts
+# megaphone-accounts.ts - real credentials; a stub is committed instead

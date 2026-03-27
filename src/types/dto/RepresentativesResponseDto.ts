@@ -7,7 +7,7 @@ export type RepresentativesResponseDto = {
     onlineWeight: number;
     /** Aggregate weight that is neither online or belongs to an open account. */
     offlineWeight: number;
-    /** These representatives are populated directly by the nano RPC and have at least 100,000 BAN voting weight */
+    /** These representatives are populated directly by the nano RPC and have at least 100,000 KSHS voting weight */
     thresholdReps: RepresentativeDto[];
     /** These representatives are populated by querying the peers
      * the node is connected to & then inspecting each peer for a nano node monitor. */

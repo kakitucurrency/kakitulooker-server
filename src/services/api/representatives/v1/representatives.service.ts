@@ -15,7 +15,7 @@ const getRepresentativesDto = async (): Promise<RepresentativesResponseDto> => {
     //  If so, monitored reps doesn't have to be passed into he getLargeReps call anymore.
     const largeReps = await getLargeReps(monitoredReps);
     const onlineWeight = await getOnlineWeight();
-    const offlineWeight = AppCache.networkStats.spyglassQuorum.offlineWeight;
+    const offlineWeight = AppCache.networkStats.spyglassQuorum ? AppCache.networkStats.spyglassQuorum.offlineWeight : 0;
     return {
         thresholdReps: largeReps,
         monitoredReps,
