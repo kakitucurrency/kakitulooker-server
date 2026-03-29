@@ -17,7 +17,7 @@ export const URL_WHITE_LIST = [
 
 /** Used to read data from the Kakitu node RPC */
 export const NANO_CLIENT = new NanoClient({
-    url: process.env.RPC_URL || 'https://kakitu.org',
+    url: process.env.RPC_URL || 'https://rpc.kakitu.org',
     requestHeaders: {
         Authorization: process.env.RPC_AUTH || '',
     },
