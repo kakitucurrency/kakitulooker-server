@@ -1,7 +1,9 @@
 import { RepresentativesResponseDto } from '@app/types';
 import { AppCache, NANO_CLIENT } from '@app/config';
 import { LOG_ERR, LOG_INFO } from '@app/services';
-import { rawToBan } from 'banano-unit-converter';
+
+// KSHS uses 10^30 raw per 1 KSHS (Nano-standard, not Banano's 10^29)
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 /** Gets the representative list directly from the Kakitu node RPC. */
 const getRepresentativesPromise = async (): Promise<RepresentativesResponseDto> => {
@@ -14,6 +16,8 @@ const getRepresentativesPromise = async (): Promise<RepresentativesResponseDto> 
         ? (onlineData as any).representatives
         : Object.keys((onlineData as any).representatives || {});
 
+    // On a single-node network the node is online if RPC responds (no peers to exchange votes with)
+    const nodeIsReachable = onlineReps.length > 0 || (repsData as any).representatives !== undefined;
     const onlineSet = new Set(onlineReps);
     const quorum = AppCache.networkStats.spyglassQuorum;
     const onlineWeight = quorum ? Math.round(quorum.onlineWeight) : 0;
@@ -23,12 +27,12 @@ const getRepresentativesPromise = async (): Promise<RepresentativesResponseDto> 
     const thresholdReps = [];
     for (const address in (repsData as any).representatives) {
         const raw = (repsData as any).representatives[address];
-        const weight = Math.round(Number(rawToBan(raw)));
-        if (weight >= 100000) {
+        const weight = rawToKshs(raw);
+        if (weight >= 1) {
             thresholdReps.push({
                 address,
                 weight,
-                online: onlineSet.has(address),
+                online: onlineSet.has(address) || nodeIsReachable,
                 delegatorsCount: 0,
                 principal: weight >= principalMin,
                 uptimePercentDay: 100,

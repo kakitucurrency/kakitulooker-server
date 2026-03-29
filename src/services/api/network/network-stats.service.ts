@@ -2,14 +2,15 @@ import { AppCache, NANO_CLIENT } from '@app/config';
 import { LOG_ERR, LOG_INFO } from '@app/services';
 import { SpyglassAPIQuorumDto, SupplyDto } from '@app/types';
 import { ConfirmationQuorumResponse } from '@dev-ptera/nano-node-rpc';
-import { rawToBan } from 'banano-unit-converter';
+// KSHS uses 10^30 raw per 1 KSHS (Nano-standard, not Banano's 10^29)
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 /** Gets quorum data directly from the Kakitu node RPC. */
 const getQuorumFromNode = (): Promise<SpyglassAPIQuorumDto> =>
     NANO_CLIENT.confirmation_quorum()
         .then((data: ConfirmationQuorumResponse) => {
-            const onlineWeight = Number(rawToBan(data.online_stake_total));
-            const quorumDelta = Number(rawToBan(data.quorum_delta));
+            const onlineWeight = Number(rawToKshs(data.online_stake_total));
+            const quorumDelta = Number(rawToKshs(data.quorum_delta));
             return Promise.resolve({
                 noRepPercent: 0,
                 noRepWeight: 0,
@@ -18,9 +19,9 @@ const getQuorumFromNode = (): Promise<SpyglassAPIQuorumDto> =>
                 offlineWeight: 0,
                 onlinePercent: 100,
                 onlineWeight,
-                onlineWeightMinimum: Number(rawToBan(data.online_weight_minimum)),
+                onlineWeightMinimum: Number(rawToKshs(data.online_weight_minimum)),
                 onlineWeightQuorumPercent: Number(data.online_weight_quorum_percent),
-                peersStakeWeight: Number(rawToBan(data.peers_stake_total)),
+                peersStakeWeight: Number(rawToKshs(data.peers_stake_total)),
                 quorumDelta,
             });
         })
@@ -45,7 +46,7 @@ const getSupplyFromNode = (): Promise<SupplyDto> =>
     new Promise<SupplyDto>((resolve) => {
         NANO_CLIENT.available_supply()
             .then((supplyResponse: any) => {
-                const available = Number(rawToBan(supplyResponse.available));
+                const available = Number(rawToKshs(supplyResponse.available));
                 resolve({
                     totalAmount: available,
                     circulatingAmount: available,
