@@ -7,6 +7,9 @@ import { LOG_INFO, LOG_ERR } from '@app/services';
 
 const OFFLINE_AFTER_PINGS = 2;
 
+// Genesis rep is always online if the RPC responds — single-node network has no peers to exchange votes with
+const GENESIS_ADDRESS = 'kshs_1mqj8myiphp7uzzoopegxogwdqosrd4n9ybckp5kh3f8o1yuo974dywt7k7h';
+
 /** Given an address, marks the representative as online in the AppCache. */
 export const markRepAsOnline = (address: string, writeToOnlineRepsList: boolean = false): void => {
     AppCache.repPings.map.set(address, AppCache.repPings.currPing);
@@ -63,7 +66,9 @@ export const getOnlineRepsPromise = (): Promise<string[]> => {
             .then((data: Array<RPC.RepresentativesOnlineResponse>) => {
                 // Update online pings
                 AppCache.repPings.currPing++;
-                console.log(AppCache.repPings.currPing);
+
+                // Always mark genesis as online if RPC is reachable (proved by this call succeeding)
+                currentPingOnlineReps.add(GENESIS_ADDRESS);
 
                 // Iterate through the results, add all unique reps to a set.
                 for (const resultSet of data) {
