@@ -45,6 +45,11 @@ export const getBlockInfo = (req, res): void => {
             } as BlockDto);
         })
         .catch((err) => {
-            res.status(500).send(err);
+            const errStr = typeof err === 'string' ? err : JSON.stringify(err);
+            if (errStr.includes('Block not found')) {
+                res.status(404).send({ error: 'Block not found' });
+            } else {
+                res.status(500).send(err);
+            }
         });
 };
