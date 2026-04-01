@@ -33,6 +33,7 @@ export const cacheRepresentatives = async (): Promise<void> => {
         getRepresentativesDto()
             .then((data: RepresentativesResponseDto) => {
                 AppCache.representatives = data;
+                AppCache.lastUpdated.representatives = Date.now();
                 resolve(LOG_INFO('Representatives Updated', start));
             })
             .catch((err) => {

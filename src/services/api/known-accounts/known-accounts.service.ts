@@ -6,4 +6,5 @@ import { LOG_INFO } from '@app/services';
 export const cacheKnownAccounts = async (): Promise<void> => {
     LOG_INFO('Known accounts: no external registry, using empty list');
     AppCache.knownAccounts = [] as KnownAccountDto[];
+    AppCache.lastUpdated.knownAccounts = Date.now();
 };

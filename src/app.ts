@@ -13,11 +13,42 @@ const http = require('http');
 const app = express();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
 process.env.UV_THREADPOOL_SIZE = String(16);
 
 app.use(morgan('dev'));
 
-app.use(bodyParser.json()); //utilizes the body-parser package
+app.use(bodyParser.json({ limit: '1mb' }));
+
+/* Security headers */
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+});
+
+/* General rate limiter: 100 requests per minute per IP */
+const generalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: JSON.stringify({ error: 'Too many requests, please try again later.' }),
+});
+
+/* Strict rate limiter for megaphone: 5 requests per minute */
+const megaphoneLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: JSON.stringify({ error: 'Too many megaphone requests, please try again later.' }),
+});
+
+app.use(generalLimiter);
 
 import {
     IS_PRODUCTION,
@@ -62,13 +93,39 @@ const corsOptions = {
     },
 };
 
-const sendCached = (res, cacheKey: keyof AppCache): void => res.send(JSON.stringify(AppCache[cacheKey]));
+const sendCached = (res, cacheKey: keyof AppCache): void => {
+    const lastUpdated = AppCache.lastUpdated[cacheKey] || null;
+    const data = AppCache[cacheKey];
+    res.send(JSON.stringify({ data, lastUpdated }));
+};
 
 app.use(cors(corsOptions));
+
+/* Health check — outside auth/CORS so monitoring tools can reach it */
+const serverStartTime = Date.now();
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: Math.floor((Date.now() - serverStartTime) / 1000),
+    });
+});
 
 /* Set response headers to text-json */
 app.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json');
+    next();
+});
+
+/* Request timeout — abort if an RPC call hangs longer than 30 seconds */
+const REQUEST_TIMEOUT_MS = 30_000;
+app.use((req, res, next) => {
+    const timer = setTimeout(() => {
+        if (!res.headersSent) {
+            res.status(504).json({ error: 'Request timed out' });
+        }
+    }, REQUEST_TIMEOUT_MS);
+    res.on('finish', () => clearTimeout(timer));
+    res.on('close', () => clearTimeout(timer));
     next();
 });
 
@@ -78,13 +135,17 @@ app.get(`/${PATH_ROOT}/aliases`, (req, res) => getAliases(req, res));
 app.get(`/${PATH_ROOT}/block/*`, (req, res) => getBlockInfo(req, res));
 app.get(`/${PATH_ROOT}/confirmed-transactions`, (req, res) => getConfirmedTransactions(req, res));
 app.get(`/${PATH_ROOT}/insights/*`, (req, res) => getAccountInsights(req, res));
-app.post(`/${PATH_ROOT}/megaphone`, (req, res) => useMegaphone(req, res));
+app.post(`/${PATH_ROOT}/megaphone`, megaphoneLimiter, (req, res) => useMegaphone(req, res));
 app.get(`/${PATH_ROOT}/node`, (req, res) => getNodeStats(req, res));
 app.get(`/${PATH_ROOT}/pending-transactions`, (req, res) => getPendingTransactions(req, res));
 
 /* v2 API — compatible with yellow-spyglass-client (Creeper explorer) */
 app.get(`/${PATH_ROOT}/v2/block/:hash`, (req, res) => {
     const hash = req.params.hash;
+    if (typeof hash !== 'string' || !/^[0-9a-fA-F]{64}$/.test(hash)) {
+        res.status(400).send({ error: 'Invalid block hash. Expected a 64-character hex string.' });
+        return;
+    }
     blocksInfoPromise([hash])
         .then((blockInfo: any) => {
             res.send(blockInfo);
@@ -103,6 +164,14 @@ app.get(`/${PATH_ROOT}/representatives`, (req, res) => sendCached(res, 'represen
 app.get(`/${PATH_ROOT}/v2/representatives`, (req, res) => sendCached(res, 'representativesV2'));
 app.get(`/${PATH_ROOT}/accounts-balance`, (req, res) => getRichList(req, res));
 app.get(`/${PATH_ROOT}/online-reps`, (req, res) => res.send(AppCache.representatives.onlineReps));
+
+/* Global error handler — must be the last middleware */
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    if (!res.headersSent) {
+        res.status(500).send({ error: 'Internal server error' });
+    }
+});
 
 const port: number = Number(process.env.PORT || 3000);
 const server = http.createServer(app);

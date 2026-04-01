@@ -1,7 +1,15 @@
 import { DelegatorsResponse } from '@dev-ptera/nano-node-rpc';
 import { NANO_CLIENT } from '@app/config';
 
-export const delegatorsRpc = async (address): Promise<DelegatorsResponse> =>
-    NANO_CLIENT.delegators(address)
-        .then((delegators: DelegatorsResponse) => Promise.resolve(delegators))
-        .catch((err) => Promise.reject(err));
+const RPC_TIMEOUT_MS = 5000;
+
+export const delegatorsRpc = async (address: string, count: number = 1000): Promise<DelegatorsResponse> => {
+    const rpcPromise = NANO_CLIENT.delegators(address, count)
+        .then((delegators: DelegatorsResponse) => Promise.resolve(delegators));
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`delegatorsRpc timeout after ${RPC_TIMEOUT_MS}ms for ${address}`)), RPC_TIMEOUT_MS)
+    );
+
+    return Promise.race([rpcPromise, timeoutPromise]);
+};

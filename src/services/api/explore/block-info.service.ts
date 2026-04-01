@@ -13,10 +13,19 @@ export const blocksInfoPromise = (blocks: string[]): Promise<BlocksInfoResponse>
             return Promise.reject(LOG_ERR('blocksInfoPromise', err, { blocks }));
         });
 
+/** Validates a block hash: must be exactly 64 hex characters. */
+const isValidBlockHash = (hash: string): boolean =>
+    typeof hash === 'string' && /^[0-9a-fA-F]{64}$/.test(hash);
+
 /** Returns block information for a given hash.  */
 export const getBlockInfo = (req, res): void => {
     const parts = req.url.split('/');
     const hash = parts[parts.length - 1];
+
+    if (!isValidBlockHash(hash)) {
+        res.status(400).send({ error: 'Invalid block hash. Expected a 64-character hex string.' });
+        return;
+    }
 
     blocksInfoPromise([hash])
         .then((blockInfo: BlocksInfoResponse) => {

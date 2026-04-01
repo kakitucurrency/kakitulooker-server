@@ -9,6 +9,17 @@ import {
 } from '@app/types';
 import { NetworkStatsDto } from '../types/dto/NetworkStatsDto';
 
+/** Tracks the last successful update time for each cacheable key. */
+export type CacheTimestamps = {
+    accountDistributionStats: number;
+    knownAccounts: number;
+    networkStats: number;
+    priceData: number;
+    richList: number;
+    representatives: number;
+    representativesV2: number;
+};
+
 export type AppCache = {
     /** Graph data for KSHS distribution. */
     accountDistributionStats: AccountDistributionStatsDto;
@@ -50,6 +61,9 @@ export type AppCache = {
      *  Stores online weight, monitored, large, and micro representatives.
      *  Used by KakituLooker. */
     representativesV2: RepresentativesResponseDto;
+
+    /** Unix-ms timestamps of the last successful cache update per key. */
+    lastUpdated: CacheTimestamps;
 };
 
 export const AppCache: AppCache = {
@@ -86,5 +100,14 @@ export const AppCache: AppCache = {
         onlineWeight: 0,
         offlineWeight: 0,
         onlineReps: [],
+    },
+    lastUpdated: {
+        accountDistributionStats: 0,
+        knownAccounts: 0,
+        networkStats: 0,
+        priceData: 0,
+        richList: 0,
+        representatives: 0,
+        representativesV2: 0,
     },
 };

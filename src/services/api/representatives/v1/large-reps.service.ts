@@ -1,8 +1,9 @@
 import { MonitoredRepDto, RepresentativeDto } from '@app/types';
 import { AppCache, NANO_CLIENT } from '@app/config';
 import { calculateUptimeStatistics, isRepOnline, LOG_INFO, writeRepStatistics } from '@app/services';
-import { rawToBan } from 'banano-unit-converter';
 import { isRepPrincipal, populateDelegatorsCount, sortRepByWeight } from './rep-utils';
+
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 const MIN_WEIGHT_TO_BE_COUNTED = 100000;
 
@@ -26,7 +27,7 @@ export const getLargeReps = async (monitoredReps: MonitoredRepDto[]): Promise<Re
     // Add all reps with high-enough delegated weight to a map.
     for (const address in rpcData.representatives) {
         const raw = rpcData.representatives[address];
-        const weight = Math.round(Number(rawToBan(raw)));
+        const weight = Math.round(rawToKshs(raw));
         if (weight >= MIN_WEIGHT_TO_BE_COUNTED) {
             largeRepMap.set(address, { weight });
         } else {

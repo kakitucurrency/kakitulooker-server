@@ -7,7 +7,7 @@ import {
     ErrorResponse,
 } from '@dev-ptera/nano-node-rpc';
 import { AccountOverviewDto, DelegatorDto } from '@app/types';
-import { rawToBan } from 'banano-unit-converter';
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 import { AppCache } from '@app/config';
 
 type DelegatorsOverview = {
@@ -46,7 +46,7 @@ const delegatorsPromise = (address: string): Promise<DelegatorsOverview> =>
                 /* Filters out 0-weight delegators.  These accounts delegate weight then transfer their funds.  */
                 if (delegatorsResponse.delegators[key] !== '0') {
                     /* Filters out dust. */
-                    const ban = Number(rawToBan(delegatorsResponse.delegators[key]));
+                    const ban = rawToKshs(delegatorsResponse.delegators[key]);
                     if (isNaN(ban) || Number(ban.toFixed(10)) === 0) {
                         continue;
                     }
@@ -76,11 +76,20 @@ const delegatorsPromise = (address: string): Promise<DelegatorsOverview> =>
             return Promise.reject(LOG_ERR('getDelegators', err, { address }));
         });
 
+/** Validates a kshs_ address: must be exactly 65 characters starting with kshs_ */
+const isValidAddress = (address: string): boolean =>
+    typeof address === 'string' && /^kshs_[13][a-km-zA-HJ-NP-Z1-9]{59}$/.test(address);
+
 /** Given an address, returns an overview of the account including balance, confirmed/pending transactions, delegators, etc. */
 export const getAccountOverview = (req, res): void => {
     const parts = req.url.split('/');
     const size = Math.min(req.query.size || 50, 50);
     const address = parts[parts.length - 1];
+
+    if (!isValidAddress(address)) {
+        res.status(400).send({ error: 'Invalid address format. Expected kshs_ prefix with 65 total characters.' });
+        return;
+    }
 
     Promise.all([
         accountBalancePromise(address),

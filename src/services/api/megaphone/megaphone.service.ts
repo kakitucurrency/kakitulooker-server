@@ -16,8 +16,25 @@ const sendFunds = (wallet: string, source: string, destination: string, amount: 
             });
     });
 
+/** Validates the megaphone API key from header or body. Returns true if authorized. */
+export const megaphoneAuth = (req, res): boolean => {
+    const configuredKey = process.env.MEGAPHONE_API_KEY;
+    if (!configuredKey) {
+        res.status(403).send(JSON.stringify({ error: 'Megaphone API key not configured on server' }));
+        return false;
+    }
+    const providedKey = req.headers['x-api-key'] || req.body.api_key;
+    if (!providedKey || providedKey !== configuredKey) {
+        res.status(403).send(JSON.stringify({ error: 'Forbidden: invalid or missing API key' }));
+        return false;
+    }
+    return true;
+};
+
 /** Sends messages to selected accounts. */
 export const useMegaphone = async (req, res) => {
+    if (!megaphoneAuth(req, res)) return;
+
     const hasLargeRep: string[] = req.body.hasLargeRep || [];
     const hasOfflineRep: string[] = req.body.hasOfflineRep || [];
 

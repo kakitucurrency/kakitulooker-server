@@ -9,6 +9,7 @@ const DEFAULT_RECORDS_PER_PAGE = 25;
 export const cacheRichList = async (): Promise<void> => {
     LOG_INFO('Rich list: no external registry, using empty list');
     AppCache.richList = [] as AccountBalanceDto[];
+    AppCache.lastUpdated.richList = Date.now();
 };
 
 /** Uses the AppCache to return a section of all known accounts. */

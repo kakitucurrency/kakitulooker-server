@@ -82,6 +82,7 @@ export const cacheNetworkStats = async (): Promise<void> => {
                     principalRepMinBan: Math.round(spyglassQuorum.onlineWeight * 0.001),
                     openedAccounts: AppCache.networkStats.openedAccounts,
                 };
+                AppCache.lastUpdated.networkStats = Date.now();
                 resolve(LOG_INFO('Network Stats Updated', start));
             })
             .catch((err) => {

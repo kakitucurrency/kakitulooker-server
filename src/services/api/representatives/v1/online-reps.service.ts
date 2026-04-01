@@ -2,8 +2,9 @@ import { AppCache, BACKUP_NODES, NANO_CLIENT } from '@app/config';
 import * as RPC from '@dev-ptera/nano-node-rpc';
 import axios, { AxiosResponse } from 'axios';
 import { ConfirmationQuorumResponse } from '@dev-ptera/nano-node-rpc';
-import { rawToBan } from 'banano-unit-converter';
 import { LOG_INFO, LOG_ERR } from '@app/services';
+
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 const OFFLINE_AFTER_PINGS = 2;
 
@@ -110,7 +111,7 @@ export const getOnlineRepsPromise = (): Promise<string[]> => {
 export const getOnlineWeight = (): Promise<number> =>
     NANO_CLIENT.confirmation_quorum()
         .then((quorumResponse: ConfirmationQuorumResponse) =>
-            Promise.resolve(Number(rawToBan(quorumResponse.online_stake_total)))
+            Promise.resolve(rawToKshs(quorumResponse.online_stake_total))
         )
         .catch((err) => Promise.reject(LOG_ERR('cacheRepresentatives.getOnlineWeight', err)));
 

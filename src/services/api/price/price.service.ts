@@ -47,6 +47,7 @@ export const cachePriceData = async (): Promise<void> => {
         getPrice()
             .then((data) => {
                 AppCache.priceData = data;
+                AppCache.lastUpdated.priceData = Date.now();
                 resolve(LOG_INFO('Price Data Updated', start));
             })
             .catch((err) => {

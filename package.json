@@ -19,6 +19,7 @@
         "dotenv": "^10.0.0",
         "esm": "^3.2.25",
         "express": "^4.16.4",
+        "express-rate-limit": "^7.1.0",
         "firebase-admin": "^9.10.0",
         "get-folder-size": "^2.0.0",
         "morgan": "^1.10.0"

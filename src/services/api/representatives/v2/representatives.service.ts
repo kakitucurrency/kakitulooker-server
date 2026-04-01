@@ -64,6 +64,7 @@ export const cacheRepresentativesV2 = async (): Promise<void> => {
         getRepresentativesPromise()
             .then((data: RepresentativesResponseDto) => {
                 AppCache.representativesV2 = data;
+                AppCache.lastUpdated.representativesV2 = Date.now();
                 resolve(LOG_INFO('Representatives V2 Updated', start));
             })
             .catch((err) => {

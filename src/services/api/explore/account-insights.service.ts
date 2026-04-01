@@ -2,7 +2,7 @@ import { LOG_ERR } from '@app/services';
 import { accountHistoryRpc } from '@app/rpc';
 import { AccountHistoryResponse } from '@dev-ptera/nano-node-rpc';
 import { InsightsDto } from '@app/types';
-import { rawToBan } from 'banano-unit-converter';
+const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
     //TODO: check block count before doing this; max of 50,000 tx.  Client blocks this request, but server needs to as well.
@@ -44,7 +44,7 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
                 const isLastDp = index === accountHistory.history.length;
                 const addPoint = true;
                 if (transaction.amount) {
-                    const ban = Number(Number(rawToBan(transaction.amount)).toFixed(6));
+                    const ban = Number(rawToKshs(transaction.amount).toFixed(6));
                     const addr = transaction.account;
                     if (transaction['subtype'] === 'receive') {
                         balance += ban;

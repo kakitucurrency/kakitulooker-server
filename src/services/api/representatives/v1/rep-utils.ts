@@ -39,31 +39,39 @@ export const sortMonitoredRepsByStatus = (onlineReps: PeerMonitorStats[]): PeerM
 /** Given a weight (non-raw), returns if it's enough to be a considered a Principal Representative. */
 export const isRepPrincipal = (weight: number): boolean => weight > AppCache.networkStats.principalRepMinBan;
 
-/** Given a map of representatives, populates delegators count. */
+const RPC_TIMEOUT_MS = 5000;
+const CONCURRENCY_LIMIT = 5;
+
+/** Given a map of representatives, populates delegators count with concurrency limiting. */
 export const populateDelegatorsCount = async (
     reps: Map<string, Partial<{ delegatorsCount: number }>>
 ): Promise<void> => {
-    const delegatorCountPromises: Promise<{ address: string; delegatorsCount: number }>[] = [];
+    const addresses = Array.from(reps.keys());
 
-    for (const address of reps.keys()) {
-        delegatorCountPromises.push(
-            NANO_CLIENT.delegators_count(address)
-                .then((data: RPC.DelegatorsCountResponse) =>
-                    Promise.resolve({
-                        address,
-                        delegatorsCount: Number(data.count),
-                    })
-                )
-                .catch((err) => {
-                    LOG_ERR('cacheRepresentatives.delegators_count', err, { address });
-                    return Promise.resolve({
-                        address,
-                        delegatorsCount: 0,
-                    });
-                })
+    const fetchCount = (address: string): Promise<{ address: string; delegatorsCount: number }> => {
+        const rpcPromise = NANO_CLIENT.delegators_count(address)
+            .then((data: RPC.DelegatorsCountResponse) => ({
+                address,
+                delegatorsCount: Number(data.count),
+            }));
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`delegators_count timeout for ${address}`)), RPC_TIMEOUT_MS)
         );
+
+        return Promise.race([rpcPromise, timeoutPromise])
+            .catch((err) => {
+                LOG_ERR('cacheRepresentatives.delegators_count', err, { address });
+                return { address, delegatorsCount: 0 };
+            });
+    };
+
+    // Process in batches of CONCURRENCY_LIMIT
+    for (let i = 0; i < addresses.length; i += CONCURRENCY_LIMIT) {
+        const batch = addresses.slice(i, i + CONCURRENCY_LIMIT);
+        const results = await Promise.all(batch.map(fetchCount));
+        for (const pair of results) {
+            reps.get(pair.address).delegatorsCount = pair.delegatorsCount;
+        }
     }
-    await Promise.all(delegatorCountPromises).then((data) => {
-        data.map((pair) => (reps.get(pair.address).delegatorsCount = Number(pair.delegatorsCount)));
-    });
 };
