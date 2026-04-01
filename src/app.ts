@@ -30,6 +30,7 @@ import {
     KNOWN_ACCOUNTS_REFRESH_INTERVAL_MS,
     NETWORK_STATS_REFRESH_INTERVAL_MS,
 } from '@app/config';
+import { blocksInfoPromise } from './services/api/explore/block-info.service';
 import {
     getAccountOverview,
     getConfirmedTransactions,
@@ -80,6 +81,18 @@ app.get(`/${PATH_ROOT}/insights/*`, (req, res) => getAccountInsights(req, res));
 app.post(`/${PATH_ROOT}/megaphone`, (req, res) => useMegaphone(req, res));
 app.get(`/${PATH_ROOT}/node`, (req, res) => getNodeStats(req, res));
 app.get(`/${PATH_ROOT}/pending-transactions`, (req, res) => getPendingTransactions(req, res));
+
+/* v2 API — compatible with yellow-spyglass-client (Creeper explorer) */
+app.get(`/${PATH_ROOT}/v2/block/:hash`, (req, res) => {
+    const hash = req.params.hash;
+    blocksInfoPromise([hash])
+        .then((blockInfo: any) => {
+            res.send(blockInfo);
+        })
+        .catch((err) => {
+            res.status(500).send({ error: String(err) });
+        });
+});
 
 /* Cached Results */
 app.get(`/${PATH_ROOT}/accounts-distribution`, (req, res) => sendCached(res, 'accountDistributionStats'));
