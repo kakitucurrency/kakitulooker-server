@@ -76,7 +76,7 @@ export const AppCache: AppCache = {
         spyglassQuorum: undefined,
         nakamotoCoefficient: undefined,
         peerVersions: undefined,
-        principalRepMinBan: undefined,
+        principalRepMinKshs: undefined,
         openedAccounts: 0,
     },
     priceData: undefined,

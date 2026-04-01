@@ -37,7 +37,7 @@ export const sortMonitoredRepsByStatus = (onlineReps: PeerMonitorStats[]): PeerM
     });
 
 /** Given a weight (non-raw), returns if it's enough to be a considered a Principal Representative. */
-export const isRepPrincipal = (weight: number): boolean => weight > AppCache.networkStats.principalRepMinBan;
+export const isRepPrincipal = (weight: number): boolean => weight > AppCache.networkStats.principalRepMinKshs;
 
 const RPC_TIMEOUT_MS = 5000;
 const CONCURRENCY_LIMIT = 5;

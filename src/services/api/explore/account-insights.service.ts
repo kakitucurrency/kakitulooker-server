@@ -15,17 +15,17 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
             const insightsDto: InsightsDto = {
                 data: [],
                 maxAmountReceivedHash: undefined,
-                maxAmountReceivedBan: 0,
+                maxAmountReceivedKshs: 0,
                 maxAmountSentHash: undefined,
-                maxAmountSentBan: 0,
+                maxAmountSentKshs: 0,
                 maxBalanceHash: undefined,
-                maxBalanceBan: 0,
+                maxBalanceKshs: 0,
                 mostCommonRecipientAddress: undefined,
                 mostCommonSenderAddress: undefined,
                 mostCommonRecipientTxCount: 0,
                 mostCommonSenderTxCount: 0,
-                totalAmountReceivedBan: 0,
-                totalAmountSentBan: 0,
+                totalAmountReceivedKshs: 0,
+                totalAmountSentKshs: 0,
                 totalTxSent: 0,
                 totalTxReceived: 0,
                 firstInTxUnixTimestamp: undefined,
@@ -44,10 +44,10 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
                 const isLastDp = index === accountHistory.history.length;
                 const addPoint = true;
                 if (transaction.amount) {
-                    const ban = Number(rawToKshs(transaction.amount).toFixed(6));
+                    const kshs = Number(rawToKshs(transaction.amount).toFixed(6));
                     const addr = transaction.account;
                     if (transaction['subtype'] === 'receive') {
-                        balance += ban;
+                        balance += kshs;
                         if (!insightsDto.firstInTxHash) {
                             insightsDto.firstInTxHash = transaction.hash;
                             insightsDto.firstInTxUnixTimestamp = Number(transaction.local_timestamp);
@@ -56,17 +56,17 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
                         insightsDto.lastInTxUnixTimestamp = Number(transaction.local_timestamp);
 
                         insightsDto.totalTxReceived += 1;
-                        insightsDto.totalAmountReceivedBan += ban;
+                        insightsDto.totalAmountReceivedKshs += kshs;
                         accountReceivedMap.has(addr)
                             ? accountReceivedMap.set(addr, accountReceivedMap.get(addr) + 1)
                             : accountReceivedMap.set(addr, 1);
-                        if (ban > insightsDto.maxAmountReceivedBan) {
-                            insightsDto.maxAmountReceivedBan = ban;
+                        if (kshs > insightsDto.maxAmountReceivedKshs) {
+                            insightsDto.maxAmountReceivedKshs = kshs;
                             insightsDto.maxAmountReceivedHash = transaction.hash;
                         }
                     } else if (transaction['subtype'] === 'send') {
-                        balance -= ban;
-                        insightsDto.totalAmountSentBan += ban;
+                        balance -= kshs;
+                        insightsDto.totalAmountSentKshs += kshs;
                         if (!insightsDto.firstOutTxHash) {
                             insightsDto.firstOutTxHash = transaction.hash;
                             insightsDto.firstOutTxUnixTimestamp = Number(transaction.local_timestamp);
@@ -77,13 +77,13 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
                         accountSentMap.has(addr)
                             ? accountSentMap.set(addr, accountSentMap.get(addr) + 1)
                             : accountSentMap.set(addr, 1);
-                        if (ban > insightsDto.maxAmountSentBan) {
-                            insightsDto.maxAmountSentBan = ban;
+                        if (kshs > insightsDto.maxAmountSentKshs) {
+                            insightsDto.maxAmountSentKshs = kshs;
                             insightsDto.maxAmountSentHash = transaction.hash;
                         }
                     }
-                    if (balance >= insightsDto.maxBalanceBan) {
-                        insightsDto.maxBalanceBan = balance;
+                    if (balance >= insightsDto.maxBalanceKshs) {
+                        insightsDto.maxBalanceKshs = balance;
                         insightsDto.maxBalanceHash = transaction.hash;
                     }
                 }

@@ -2,7 +2,7 @@ import { RepresentativesResponseDto } from '@app/types';
 import { AppCache, NANO_CLIENT } from '@app/config';
 import { LOG_ERR, LOG_INFO } from '@app/services';
 
-// KSHS uses 10^30 raw per 1 KSHS (Nano-standard, not Banano's 10^29)
+// 10^30 raw per 1 KSHS
 const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 /** Gets the representative list directly from the Kakitu node RPC. */

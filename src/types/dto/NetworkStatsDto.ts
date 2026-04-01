@@ -7,7 +7,7 @@ export type NetworkStatsDto = {
     nakamotoCoefficient: number;
     peerVersions: PeerVersionsDto[];
     spyglassQuorum: SpyglassAPIQuorumDto;
-    principalRepMinBan: number;
+    principalRepMinKshs: number;
     /** This value is populated whenever the account distribution metrics are updated. */
     openedAccounts: number;
 };

@@ -46,24 +46,24 @@ const delegatorsPromise = (address: string): Promise<DelegatorsOverview> =>
                 /* Filters out 0-weight delegators.  These accounts delegate weight then transfer their funds.  */
                 if (delegatorsResponse.delegators[key] !== '0') {
                     /* Filters out dust. */
-                    const ban = rawToKshs(delegatorsResponse.delegators[key]);
-                    if (isNaN(ban) || Number(ban.toFixed(10)) === 0) {
+                    const kshs = rawToKshs(delegatorsResponse.delegators[key]);
+                    if (isNaN(kshs) || Number(kshs.toFixed(10)) === 0) {
                         continue;
                     }
                     delegatorsDto.push({
                         address: key,
-                        weightBan: ban,
+                        weightKshs: kshs,
                     });
                 }
             }
             const count = delegatorsDto.length;
 
             // Sort by weight descending
-            delegatorsDto.sort((a, b) => (a.weightBan < b.weightBan ? 1 : -1));
+            delegatorsDto.sort((a, b) => (a.weightKshs < b.weightKshs ? 1 : -1));
 
             let weightSum = 0;
             // Get total delegated weight
-            delegatorsDto.map((a) => (weightSum += a.weightBan));
+            delegatorsDto.map((a) => (weightSum += a.weightKshs));
 
             /* Only return first 1000 delegators */
             return Promise.resolve({
@@ -105,7 +105,7 @@ export const getAccountOverview = (req, res): void => {
                 balanceRaw: accountBalance.balance,
                 pendingRaw: accountBalance.pending,
                 representative: accountInfo.representative,
-                principal: delegatorsData.weightSum >= AppCache.networkStats.principalRepMinBan,
+                principal: delegatorsData.weightSum >= AppCache.networkStats.principalRepMinKshs,
                 completedTxCount: Number(accountInfo.block_count),
                 pendingTxCount: Number(pendingTransactions.length),
                 delegatorsCount: delegatorsData.count,

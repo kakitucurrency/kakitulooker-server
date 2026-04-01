@@ -2,7 +2,7 @@ import { AppCache, NANO_CLIENT } from '@app/config';
 import { LOG_ERR, LOG_INFO } from '@app/services';
 import { SpyglassAPIQuorumDto, SupplyDto } from '@app/types';
 import { ConfirmationQuorumResponse } from '@dev-ptera/nano-node-rpc';
-// KSHS uses 10^30 raw per 1 KSHS (Nano-standard, not Banano's 10^29)
+// 10^30 raw per 1 KSHS
 const rawToKshs = (raw: string): number => Number(BigInt(raw) / BigInt('1000000000000000000000000000000'));
 
 /** Gets quorum data directly from the Kakitu node RPC. */
@@ -79,7 +79,7 @@ export const cacheNetworkStats = async (): Promise<void> => {
                     nakamotoCoefficient: 1, // Single node network
                     spyglassQuorum,
                     peerVersions: [],
-                    principalRepMinBan: Math.round(spyglassQuorum.onlineWeight * 0.001),
+                    principalRepMinKshs: Math.round(spyglassQuorum.onlineWeight * 0.001),
                     openedAccounts: AppCache.networkStats.openedAccounts,
                 };
                 AppCache.lastUpdated.networkStats = Date.now();
