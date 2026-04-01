@@ -68,8 +68,8 @@ const getPeerMonitorStats = (url: string): Promise<PeerMonitorStats> =>
                 response.data.nanoNodeName = response.data.node_name;
             }
 
-            /* Remove non-banano representatives from the peers list. */
-            if (!response.data.nanoNodeAccount.includes('ban_')) {
+            /* Remove non-Kakitu representatives from the peers list. */
+            if (!response.data.nanoNodeAccount.includes('kshs_')) {
                 return Promise.resolve(undefined);
             }
             return Promise.resolve(response.data);
@@ -177,7 +177,7 @@ const getRepDetails = (rpcData: Peers): Promise<MonitoredRepDto[]> => {
         .catch((err) => Promise.reject(LOG_ERR('getMonitoredReps.getRepDetails', err)));
 };
 
-// banano creeper does not have a api.php.  Let's add it to the list of monitored representatives at some point.
+// Kakitu Looker does not have a api.php.  Let's add it to the list of monitored representatives at some point.
 export const getPeers = (req, res): void => {
     peersRpc()
         .then((peers: Peers) => {

@@ -120,9 +120,23 @@ const confirmedTransactionsPromise = (address: string): Promise<InsightsDto> =>
 /** Given an account address, it will return chart datapoints that represent that account's balance over time,
  *  as well as account-specific stats for most all-time balance, most common sender, etc.
  */
+const MAX_INSIGHTS_TX = 50000;
+
 export const getAccountInsights = async (req, res): Promise<void> => {
     const parts = req.url.split('/');
     const address = parts[parts.length - 1];
+
+    // Guard: reject insights for accounts with too many transactions to prevent OOM
+    const { NANO_CLIENT } = require('@app/config');
+    try {
+        const info = await NANO_CLIENT.account_info(address);
+        if (info && Number(info.block_count) > MAX_INSIGHTS_TX) {
+            res.status(400).send({ error: `Account has too many transactions (${info.block_count}). Insights limited to ${MAX_INSIGHTS_TX} transactions.` });
+            return;
+        }
+    } catch (e) {
+        // Account may not exist or RPC error — let the main query handle it
+    }
 
     confirmedTransactionsPromise(address)
         .then((insights: InsightsDto) => {
