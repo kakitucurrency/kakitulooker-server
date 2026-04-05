@@ -155,6 +155,61 @@ app.get(`/${PATH_ROOT}/v2/block/:hash`, (req, res) => {
         });
 });
 
+/* v1 spyglass-compatible API — used by yellow-spyglass-client */
+
+app.get(`/${PATH_ROOT}/v1/representatives/online`, (req, res) => {
+    res.send(AppCache.representativesV2.onlineReps || []);
+});
+
+app.get(`/${PATH_ROOT}/v1/network/quorum`, (req, res) => {
+    const q = AppCache.networkStats.spyglassQuorum;
+    if (!q) return res.status(503).json({ error: 'Data not yet available' });
+    res.send(q);
+});
+
+app.get(`/${PATH_ROOT}/v1/distribution/supply`, (req, res) => {
+    const supply = AppCache.networkStats.supply;
+    if (!supply) return res.status(503).json({ error: 'Data not yet available' });
+    res.send(supply);
+});
+
+app.get(`/${PATH_ROOT}/v1/network/peers`, (req, res) => {
+    res.send(AppCache.networkStats.peerVersions || []);
+});
+
+app.get(`/${PATH_ROOT}/v1/network/nakamoto-coefficient`, (req, res) => {
+    const nc = AppCache.networkStats.nakamotoCoefficient || 1;
+    res.send({ delta: 0, nakamotoCoefficient: nc, ncRepresentatives: [], ncRepsWeight: 0 });
+});
+
+app.get(`/${PATH_ROOT}/v1/network/quorum-coefficient`, (req, res) => {
+    const q = AppCache.networkStats.spyglassQuorum;
+    if (!q) return res.status(503).json({ error: 'Data not yet available' });
+    const coefficient = q.quorumDelta > 0 ? Number((q.onlineWeight / q.quorumDelta).toFixed(2)) : 0;
+    res.send({
+        delta: q.quorumDelta,
+        onlineWeight: q.onlineWeight,
+        onlineWeightMinimum: q.onlineWeightMinimum,
+        coefficient,
+        representatives: [],
+        repsWeight: 0,
+    });
+});
+
+app.post(`/${PATH_ROOT}/v1/representatives`, (req, res) => {
+    const { minimumWeight = 0 } = req.body || {};
+    const reps = (AppCache.representativesV2.thresholdReps || []).filter((r) => r.weight >= minimumWeight);
+    res.send(reps);
+});
+
+app.get(`/${PATH_ROOT}/v1/representatives/monitored`, (req, res) => {
+    res.send(AppCache.representativesV2.monitoredReps || []);
+});
+
+app.get(`/${PATH_ROOT}/v1/representatives/scores`, (req, res) => {
+    res.send([]);
+});
+
 /* Cached Results */
 app.get(`/${PATH_ROOT}/accounts-distribution`, (req, res) => sendCached(res, 'accountDistributionStats'));
 app.get(`/${PATH_ROOT}/known-accounts`, (req, res) => sendCached(res, 'knownAccounts'));
