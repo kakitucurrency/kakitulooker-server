@@ -63,6 +63,13 @@ import {
 } from '@app/config';
 import { blocksInfoPromise } from './services/api/explore/block-info.service';
 import {
+    getTokenStats,
+    getAccountBalance,
+    getRecentTransfers,
+    getAccountTransfers,
+    getTransaction,
+} from './services/api/alchemy/alchemy.service';
+import {
     getAccountOverview,
     getConfirmedTransactions,
     getBlockInfo,
@@ -208,6 +215,57 @@ app.get(`/${PATH_ROOT}/v1/representatives/monitored`, (req, res) => {
 
 app.get(`/${PATH_ROOT}/v1/representatives/scores`, (req, res) => {
     res.send([]);
+});
+
+/* ── ERC20 / Base mainnet routes ─────────────────────────────────────────── */
+
+app.get(`/${PATH_ROOT}/token/stats`, async (req, res) => {
+    try {
+        const stats = await getTokenStats();
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch token stats' });
+    }
+});
+
+app.get(`/${PATH_ROOT}/token/transfers`, async (req, res) => {
+    try {
+        const pageKey = req.query.pageKey as string | undefined;
+        const result = await getRecentTransfers(pageKey);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch transfers' });
+    }
+});
+
+app.get(`/${PATH_ROOT}/account/:address`, async (req, res) => {
+    const { address } = req.params;
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+        return res.status(400).json({ error: 'Invalid Ethereum address' });
+    }
+    try {
+        const [balance, { transfers }] = await Promise.all([
+            getAccountBalance(address),
+            getAccountTransfers(address),
+        ]);
+        res.json({ address, balance, transfers });
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch account data' });
+    }
+});
+
+app.get(`/${PATH_ROOT}/tx/:hash`, async (req, res) => {
+    const { hash } = req.params;
+    if (!/^0x[0-9a-fA-F]{64}$/.test(hash)) {
+        return res.status(400).json({ error: 'Invalid transaction hash' });
+    }
+    try {
+        const tx = await getTransaction(hash);
+        if (!tx) return res.status(404).json({ error: 'Transaction not found' });
+        res.json(tx);
+    } catch (e) {
+        res.status(500).json({ error: 'Failed to fetch transaction' });
+    }
 });
 
 /* Cached Results */
